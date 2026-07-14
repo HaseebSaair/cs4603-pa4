@@ -21,11 +21,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # TODO: install uv, sync deps, run `ruff check` and the smoke test
+      - uses: astral-sh/setup-uv@v3
+      - run: uv sync --extra dev
+      - run: uv run ruff check agent/ client/
+      - run: uv run pytest -q
 
   deploy:
     needs: lint-and-test
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      DATABRICKS_MODEL: databricks-meta-llama-3-3-70b-instruct
+      UC_CATALOG: main
+      UC_SCHEMA: default
+      SERVING_ENDPOINT_NAME: haseeb-document-analyst
+      VECTOR_SEARCH_ENDPOINT: haseeb-vs-endpoint
+      VECTOR_SEARCH_INDEX: main.default.haseeb_analyst_index
+      EMBEDDINGS_ENDPOINT: databricks-gte-large-en
+      SECRET_SCOPE: cs4603-deploy
     steps:
       - uses: actions/checkout@v4
       # TODO: install deps and run `python deployment/deploy.py` with secrets
+
+      - uses: astral-sh/setup-uv@v3
+      - run: uv sync --extra dev
+      - run: uv run python deployment/deploy.py
