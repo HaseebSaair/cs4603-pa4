@@ -21,13 +21,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from agent.graph import build_graph
 
-class FakeMessage:
+class Message:
     def __init__(self, content="", tool_calls=None):
         self.content = content
         self.tool_calls = tool_calls or []
 
 
-class FakeLLM:
+class LLM:
     def bind_tools(self, tools):
         return self
 
@@ -35,35 +35,35 @@ class FakeLLM:
         system = messages[0].content
         user = messages[-1].content
         if "planning stage" in system:
-            return FakeMessage(content='["Look up net income", "Calculate 10 percent of it"]')
+            return Message(content='["Look up net income", "Calculate 10 percent of it"]')
         if "Classify the given step" in system:
-            return FakeMessage(content="mcp_tools" if "Calculate" in user else "rag_agent")
+            return Message(content="mcp_tools" if "Calculate" in user else "rag_agent")
         if "calculator tools" in system:
-            return FakeMessage(tool_calls=[{"name": "calculate", "args": {"expression": "100 * 0.1"}}])
+            return Message(tool_calls=[{"name": "calculate", "args": {"expression": "100 * 0.1"}}])
         if "ONLY the provided document" in system:
-            return FakeMessage(content="Net income was $100 million [source: fake.pdf, p.1]")
+            return Message(content="Net income was $100 million [source: fake.pdf, p.1]")
         if "final answer" in system:
-            return FakeMessage(content="Net income was $100 million; 10% of it is $10 million.")
-        return FakeMessage(content="ok")
+            return Message(content="Net income was $100 million; 10% of it is $10 million.")
+        return Message(content="ok")
 
 
-class FakeDoc:
+class Doc:
     def __init__(self, content, metadata):
         self.page_content = content
         self.metadata = metadata
 
 
-class FakeRetriever:
+class retriever:
     def invoke(self, query):
         return [
-            FakeDoc(
+            Doc(
                 "Net income was $100 million.",
                 {"chunk_to_retrieve": "Net income was $100 million.", "source": "fake.pdf", "page": 1},
             )
         ]
 
 
-class FakeTool:
+class Tool:
     name = "calculate"
 
 
@@ -73,7 +73,7 @@ def test_graph_module_imports():
 
 
 def test_graph_compiles_and_runs_offline():
-    graph = build_graph(llm=FakeLLM(), retriever=FakeRetriever(), tools=[FakeTool()])
+    graph = build_graph(llm=LLM(), retriever=retriever(), tools=[Tool()])
 
     result = graph.invoke(
         {

@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint-and-test:
+  checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +27,7 @@ jobs:
       - run: uv run pytest -q
 
   deploy:
-    needs: lint-and-test
+    needs: checks
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     env:
